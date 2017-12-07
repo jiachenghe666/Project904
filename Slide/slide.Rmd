@@ -1,0 +1,271 @@
+---
+title: "POLS 904 Final Project"
+subtitle: "Simulation Study on Causal Forest"
+author: "Jiacheng He"
+date: "December 6, 2017"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(ggplot2)
+library(dplyr)
+library(pander)
+```
+
+
+## Introduction
+
+Wager and Athey (2017) developed causal forest method to predict heterogeneous treatment effect of each individual.
+
+Test the prediction performance and confidence interval coverage rate of causal forest.
+
+
+## Causal Forest
+
+Model setup
+
+$Y_{i}$: The outcome variable
+
+$W_{i}$: $W_{i}=1$ if individual $i$ receives treatment, $W_{i}=0$ if not treated
+
+$X_{i}$: A vector of covariates
+
+\begin{center}
+$Y_{i}=m(X_{i})+\frac{W_{i}}{2}\tau(X_{i})+\frac{1-W_{i}}{2}\tau(X_{i})+\epsilon_{i}$
+\end{center}
+
+$m(X_{i})=E[Y_{i} | X_{i}]$: The conditional mean of outcome
+
+$\tau(X_{i})=E[Y_{i} | X_{i}, W_{i}=1] - E[Y_{i} | X_{i}, W_{i}=0]$: The heterogenous treatment effect (conditional on covarites $X_{i}$)
+
+$e(X_{i})=E[W_{i} | X_{i}]$: The treatment propensity
+
+
+## Causal Forest
+
+Goal is to predict $\tau(X_{i})$ (while random forest aims to predict $m(X_{i})$)
+
+Difficulty:\
+1. Disentangle $\tau(X_{i})$ from $m(X_{i})$ and $e(X_{i})$ \
+2. Cannot perform cross-validation, because we never observe the true $\tau_{i}$ (while in random forest we observe the true $Y_{i}$)
+
+
+## Algorithm
+
+Similar to random forest
+
+Place a split at point $\tilde{x_{i}}$ which maximize the difference of $\hat{E}[Y_{i} | X_{i}=x_{i}, W_{i}=1] - \hat{E}[Y_{i} | X_{i}=x_{i}, W_{i}=0]$ between the two sides of $\tilde{x_{i}}$
+
+(while random forest maximize the difference of $\hat{E}[Y_{i} | X_{i}=x_{i}]$)
+
+
+
+## Simulation Setup
+
+DGP1 
+
+\begin{center}
+$\tau(X_{i})=0$
+
+$e(X_{i})=(1+dbeta(X1, shape1 = 2, shape2 = 4))/4$
+
+$m(X_{i})=2X_{1i}-1$
+\end{center}
+
+
+DGP2
+\begin{center}
+$\tau(X_{i})=1+\frac{1}{(1+e^{-20(X_{1i}-1/3})(1+e^{-20(X_{2i}-1/3})}$
+
+$e(X_{i})=0.5$
+
+$m(X_{i})=0$
+\end{center}
+
+
+## Simulation Setup
+
+1. Draw $X_{i}$ ~ $U(0,1)^{d}$, $\epsilon_{i}$ ~ $N(0,1)$, $W_{i}$ ~ $binom(1,e(X_{i}))$
+
+2. Run the causal forest on a training set, then evaluate the model on a test set. ($n_{train}=n_{test}$)
+
+3. For each senario, replicate it for 100 times
+
+
+
+## Sample Size and Covariate size
+
+Fix $d=10$, try $n=100, 500, 1000, 2000, 5000$;
+
+Fix $n=1000$, try $d=2, 4, 10, 20, 40$
+
+
+## Sample Size and Covariate size
+
+```{r}
+load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_n_DGP1.RData")
+output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(n), MSE)) + 
+  labs(x = "n", title = "DGP1: constant tau")
+  
+```
+
+
+## Sample Size and Covariate size
+
+```{r}
+
+output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(n), coverage)) + 
+  labs(x = "n", y = "Coverage Rate", title = "DGP1: constant tau")
+  
+```
+
+
+## Sample Size and Covariate size
+
+```{r}
+load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_d_DGP1.RData")
+output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(d), MSE)) + 
+  labs(x = "d", title = "DGP1: constant tau")
+  
+```
+
+
+## Sample Size and Covariate size
+
+```{r}
+output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(d), coverage)) + 
+  labs(x = "d", y = "Coverage Rate", title = "DGP1: constant tau")
+  
+```
+
+
+## Sample Size and Covariate size
+
+```{r}
+load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_n_DGP2.RData")
+output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(n), MSE)) + 
+  labs(x = "n", title = "DGP2: heterogeneous tau")
+  
+```
+
+
+## Sample Size and Covariate size
+
+```{r}
+
+output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(n), coverage)) + 
+  labs(x = "n", y = "Coverage Rate", title = "DGP2: heterogeneous tau")
+  
+```
+
+
+## Sample Size and Covariate size
+
+```{r}
+load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_d_DGP2.RData")
+output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(d), MSE)) + 
+  labs(x = "d", title = "DGP2: heterogeneous tau")
+  
+```
+
+
+## Sample Size and Covariate size
+
+```{r}
+output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(d), coverage)) + 
+  labs(x = "d", y = "Coverage Rate", title = "DGP2: heterogeneous tau")
+  
+```
+
+
+## Tuning Parameters
+
+I try varying five tuning parameter, one at a time. I use DGP2 and fix $n=1000, d=10$
+
+1. Sample fraction used in each tree training; (default 0.5)
+2. Covariates used in each tree training; (default $\frac{2}{3}d$)
+3. Number of trees; (default 2000)
+4. Minimun # observations in each terminal node; (defauly NULL)
+5. Regularization parameter $\lambda$; (default 0)
+
+
+## Tuning Parameters
+
+1. Try sample fraction $s = 0.1, 0.2, 0.3, 0.4, 0.5$
+
+```{r results='asis'}
+load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_s.RData")
+output %>% 
+  group_by(s) %>% 
+  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
+  pandoc.table()
+```
+
+
+## Tuning Parameters
+
+2. Try # covariates in each tree training $t = 4, 5, 6, 7, 8$
+
+```{r results='asis'}
+load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_t.RData")
+output %>% 
+  group_by(t) %>% 
+  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
+  pandoc.table()
+```
+
+
+## Tuning Parameters
+
+3. Try # trees $b = 500, 1000, 2000, 4000, 6000$
+
+```{r results='asis'}
+load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_b.RData")
+output %>% 
+  group_by(b) %>% 
+  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
+  pandoc.table()
+```
+
+
+## Tuning Parameters
+
+4. Try minimun node size $ = 0, 10, 20, 40, 80$
+
+```{r results='asis'}
+load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_size.RData")
+output %>% 
+  group_by(size) %>% 
+  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
+  pandoc.table()
+```
+
+
+## Tuning Parameters
+
+5. Try $\lambda = 0.1, 1, 5, 10, 100$
+
+```{r results='asis'}
+load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_lambda.RData")
+output %>% 
+  group_by(lambda) %>% 
+  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
+  pandoc.table()
+```
