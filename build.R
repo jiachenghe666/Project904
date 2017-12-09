@@ -1,5 +1,7 @@
 library(devtools)
 
-create("Project904")
+# create("Project904")
+
 setwd("Project904")
-document()
+# document()
+load_all()
