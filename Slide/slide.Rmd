@@ -2,7 +2,7 @@
 title: "POLS 904 Final Project"
 subtitle: "Simulation Study on Causal Forest"
 author: "Jiacheng He"
-date: "December 6, 2017"
+date: "December 10, 2017"
 output: beamer_presentation
 ---
 
@@ -90,7 +90,11 @@ $m(X_{i})=0$
 
 2. Run the causal forest on a training set, then evaluate the model on a test set. ($n_{train}=n_{test}$)
 
-3. For each senario, replicate it for 100 times
+3. For each senario, replicate it for 100 times. Then compute the average MSE and the coverage rate of 0.95 confidence interval
+
+
+## An Example
+
 
 
 
@@ -104,7 +108,7 @@ Fix $n=1000$, try $d=2, 4, 10, 20, 40$
 ## Sample Size and Covariate size
 
 ```{r}
-load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_n_DGP1.RData")
+load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_n_DGP1.RData")
 output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(n), MSE)) + 
@@ -128,7 +132,7 @@ output %>%
 ## Sample Size and Covariate size
 
 ```{r}
-load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_d_DGP1.RData")
+load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_d_DGP1.RData")
 output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(d), MSE)) + 
@@ -151,7 +155,7 @@ output %>%
 ## Sample Size and Covariate size
 
 ```{r}
-load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_n_DGP2.RData")
+load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_n_DGP2.RData")
 output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(n), MSE)) + 
@@ -175,7 +179,7 @@ output %>%
 ## Sample Size and Covariate size
 
 ```{r}
-load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_d_DGP2.RData")
+load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_d_DGP2.RData")
 output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(d), MSE)) + 
@@ -211,7 +215,7 @@ I try varying five tuning parameter, one at a time. I use DGP2 and fix $n=1000, 
 1. Try sample fraction $s = 0.1, 0.2, 0.3, 0.4, 0.5$
 
 ```{r results='asis'}
-load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_s.RData")
+load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_s.RData")
 output %>% 
   group_by(s) %>% 
   summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
@@ -224,7 +228,7 @@ output %>%
 2. Try # covariates in each tree training $t = 4, 5, 6, 7, 8$
 
 ```{r results='asis'}
-load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_t.RData")
+load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_t.RData")
 output %>% 
   group_by(t) %>% 
   summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
@@ -237,7 +241,7 @@ output %>%
 3. Try # trees $b = 500, 1000, 2000, 4000, 6000$
 
 ```{r results='asis'}
-load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_b.RData")
+load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_b.RData")
 output %>% 
   group_by(b) %>% 
   summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
@@ -250,7 +254,7 @@ output %>%
 4. Try minimun node size $ = 0, 10, 20, 40, 80$
 
 ```{r results='asis'}
-load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_size.RData")
+load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_size.RData")
 output %>% 
   group_by(size) %>% 
   summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
@@ -263,7 +267,7 @@ output %>%
 5. Try $\lambda = 0.1, 1, 5, 10, 100$
 
 ```{r results='asis'}
-load("C:/Users/j774h/OneDrive/POLS904/Causal_Forest/output_df/output_lambda.RData")
+load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_lambda.RData")
 output %>% 
   group_by(lambda) %>% 
   summarise(MSE = median(MSE), coverage = median(coverage)) %>% 

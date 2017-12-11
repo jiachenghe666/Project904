@@ -21,7 +21,7 @@ generate_true_model(X, DGP_tau, DGP_e, DGP_m, noise_sd = 1)
 A list of X, Y, W, tau, e, and m. Prepare for the subsequent use of model fitting and evaluation.
 }
 \description{
-This function accepts the baseline covariates and data generating process, 
+This function accepts the baseline covariates and data generating process,
 then return tau, m, and e, then simulate Y
 }
 \examples{
