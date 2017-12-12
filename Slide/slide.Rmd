@@ -2,15 +2,18 @@
 title: "POLS 904 Final Project"
 subtitle: "Simulation Study on Causal Forest"
 author: "Jiacheng He"
-date: "December 10, 2017"
+date: "December 13, 2017"
 output: beamer_presentation
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+setwd("C:/Users/j774h/OneDrive/POLS904/Project904/Project904")
+devtools::load_all()
 library(ggplot2)
 library(dplyr)
 library(pander)
+
 ```
 
 
@@ -63,20 +66,20 @@ Place a split at point $\tilde{x_{i}}$ which maximize the difference of $\hat{E}
 
 ## Simulation Setup
 
-DGP1 
+DGP1 (constant $\tau$)
 
 \begin{center}
 $\tau(X_{i})=0$
 
-$e(X_{i})=(1+dbeta(X1, shape1 = 2, shape2 = 4))/4$
+$e(X_{i})=(1+f_{beta}^{2,4}(X_{1i}))/4$
 
 $m(X_{i})=2X_{1i}-1$
 \end{center}
 
 
-DGP2
+DGP2 (heterogeneous $\tau$)
 \begin{center}
-$\tau(X_{i})=1+\frac{1}{(1+e^{-20(X_{1i}-1/3})(1+e^{-20(X_{2i}-1/3})}$
+$\tau(X_{i})=1+\frac{1}{(1+e^{-20(X_{1i}-1/3)})(1+e^{-20(X_{2i}-1/3)})}$
 
 $e(X_{i})=0.5$
 
@@ -95,118 +98,98 @@ $m(X_{i})=0$
 
 ## An Example
 
+```{r}
+set.seed(904)
+DGP_1 <- list(tau = 0,
+              e = expression((1 + dbeta(X1, shape1 = 2, shape2 = 4)) / 4),
+              m = expression(2 * X1 - 1))
+graphical_illustration(DGP_1, d = 10, n = 400) + labs(title = "DGP1, n = 200, d = 10")
+```
 
 
 
-## Sample Size and Covariate size
+## Sample Size and Covariate Size
+
+Vary the sample size $n$ and covariate size $d$ to see what happens:
 
 Fix $d=10$, try $n=100, 500, 1000, 2000, 5000$;
 
 Fix $n=1000$, try $d=2, 4, 10, 20, 40$
 
 
-## Sample Size and Covariate size
+## Sample Size and Covariate Size
 
 ```{r}
 load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_n_DGP1.RData")
-output %>% 
+p1 <- output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(n), MSE)) + 
+  scale_y_continuous(limit = c(0, 1.1)) +
   labs(x = "n", title = "DGP1: constant tau")
-  
-```
-
-
-## Sample Size and Covariate size
-
-```{r}
-
-output %>% 
+p2 <- output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(n), coverage)) + 
+  scale_y_continuous(limit = c(0.25, 1)) +
   labs(x = "n", y = "Coverage Rate", title = "DGP1: constant tau")
-  
-```
 
-
-## Sample Size and Covariate size
-
-```{r}
 load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_d_DGP1.RData")
-output %>% 
+p5 <- output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(d), MSE)) + 
+  scale_y_continuous(limit = c(0, 0.25)) +
   labs(x = "d", title = "DGP1: constant tau")
-  
-```
-
-
-## Sample Size and Covariate size
-
-```{r}
-output %>% 
+p6 <- output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(d), coverage)) + 
+  scale_y_continuous(limit = c(0.6, 1)) +
   labs(x = "d", y = "Coverage Rate", title = "DGP1: constant tau")
-  
-```
 
-
-## Sample Size and Covariate size
-
-```{r}
 load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_n_DGP2.RData")
-output %>% 
+p3 <- output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(n), MSE)) + 
+    scale_y_continuous(limit = c(0, 1.1)) +
   labs(x = "n", title = "DGP2: heterogeneous tau")
-  
-```
-
-
-## Sample Size and Covariate size
-
-```{r}
-
-output %>% 
+p4 <- output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(n), coverage)) + 
+  scale_y_continuous(limit = c(0.25, 1)) +
   labs(x = "n", y = "Coverage Rate", title = "DGP2: heterogeneous tau")
-  
-```
 
-
-## Sample Size and Covariate size
-
-```{r}
 load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_d_DGP2.RData")
-output %>% 
+p7 <- output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(d), MSE)) + 
+  scale_y_continuous(limit = c(0, 0.25)) +
   labs(x = "d", title = "DGP2: heterogeneous tau")
+p8 <- output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(d), coverage)) + 
+  scale_y_continuous(limit = c(0.6, 1)) +
+  labs(x = "d", y = "Coverage Rate", title = "DGP2: heterogeneous tau")
+
+multiplot(p1, p2, p3, p4, cols = 2)
   
 ```
 
 
-## Sample Size and Covariate size
+## Sample Size and Covariate Size
 
 ```{r}
-output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(d), coverage)) + 
-  labs(x = "d", y = "Coverage Rate", title = "DGP2: heterogeneous tau")
+
+multiplot(p5, p6, p7, p8, cols = 2)
   
 ```
 
 
 ## Tuning Parameters
 
-I try varying five tuning parameter, one at a time. I use DGP2 and fix $n=1000, d=10$
+I try varying five tuning parameters, one at a time. I use DGP2 and fix $n=1000, d=10$
 
 1. Sample fraction used in each tree training; (default 0.5)
 2. Covariates used in each tree training; (default $\frac{2}{3}d$)
 3. Number of trees; (default 2000)
-4. Minimun # observations in each terminal node; (defauly NULL)
+4. Minimun # observations in each terminal node; (default NULL)
 5. Regularization parameter $\lambda$; (default 0)
 
 
@@ -251,7 +234,7 @@ output %>%
 
 ## Tuning Parameters
 
-4. Try minimun node size $ = 0, 10, 20, 40, 80$
+4. Try minimun node size = 0, 10, 20, 40, 80
 
 ```{r results='asis'}
 load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_size.RData")
