@@ -19,9 +19,17 @@ library(pander)
 
 ## Introduction
 
-Wager and Athey (2017) developed causal forest method to predict heterogeneous treatment effect of each individual.
+Sometimes we are interested to estimate the heterogeneous treatment effect of a binary treatment on different subgroups. 
 
-Test the prediction performance and confidence interval coverage rate of causal forest.
+e.g. \
+Suppose we run a randomized trial to test a new drug. We spilt the subjects into a control group and a treatment group. What's the effect of this drug for adult white males and teenager Asian females respectively?
+
+
+## Introduction
+
+Wager and Athey (2017) developed causal forest method to predict heterogeneous treatment effect conditional on observed covariates. 
+ 
+In this project, I test the prediction accuracy and confidence interval coverage rate of causal forest via simulation.
 
 
 ## Causal Forest
@@ -34,13 +42,15 @@ $W_{i}$: $W_{i}=1$ if individual $i$ receives treatment, $W_{i}=0$ if not treate
 
 $X_{i}$: A vector of covariates
 
+$\tau_{i}$: Individual treatment effect. Never observed.
+
 \begin{center}
 $Y_{i}=m(X_{i})+\frac{W_{i}}{2}\tau(X_{i})+\frac{1-W_{i}}{2}\tau(X_{i})+\epsilon_{i}$
 \end{center}
 
 $m(X_{i})=E[Y_{i} | X_{i}]$: The conditional mean of outcome
 
-$\tau(X_{i})=E[Y_{i} | X_{i}, W_{i}=1] - E[Y_{i} | X_{i}, W_{i}=0]$: The heterogenous treatment effect (conditional on covarites $X_{i}$)
+$\tau(X_{i})=E[Y_{i} | X_{i}, W_{i}=1] - E[Y_{i} | X_{i}, W_{i}=0]$: The heterogeneous treatment effect (conditional on covarites $X_{i}$)
 
 $e(X_{i})=E[W_{i} | X_{i}]$: The treatment propensity
 
@@ -58,7 +68,7 @@ Difficulty:\
 
 Similar to random forest
 
-Place a split at point $\tilde{x_{i}}$ which maximize the difference of $\hat{E}[Y_{i} | X_{i}=x_{i}, W_{i}=1] - \hat{E}[Y_{i} | X_{i}=x_{i}, W_{i}=0]$ between the two sides of $\tilde{x_{i}}$
+Place a split at point $\tilde{x_{i}}$ which maximize the difference of $\hat{E}[Y_{i} | X_{i}=x_{i}, W_{i}=1] - \hat{E}[Y_{i} | X_{i}=x_{i}, W_{i}=0]$ across the two sides of $\tilde{x_{i}}$
 
 (while random forest maximize the difference of $\hat{E}[Y_{i} | X_{i}=x_{i}]$)
 
@@ -89,11 +99,11 @@ $m(X_{i})=0$
 
 ## Simulation Setup
 
-1. Draw $X_{i}$ ~ $U(0,1)^{d}$, $\epsilon_{i}$ ~ $N(0,1)$, $W_{i}$ ~ $binom(1,e(X_{i}))$
+1. Draw $X_{i}$ ~ $U(0,1)^{d}$, $W_{i}$ ~ $binom(1,e(X_{i}))$, $\epsilon_{i}$ ~ $N(0,1)$
 
-2. Run the causal forest on a training set, then evaluate the model on a test set. ($n_{train}=n_{test}$)
+2. Run the causal forest on a training set, then evaluate the trained model on a test set. ($n_{train}=n_{test}$)
 
-3. For each senario, replicate it for 100 times. Then compute the average MSE and the coverage rate of 0.95 confidence interval
+3. For each senario, replicate it for 100 times. Then compute the average MSE and the 0.95 confidence interval coverage rate
 
 
 ## An Example
