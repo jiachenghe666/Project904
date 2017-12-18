@@ -1,6 +1,6 @@
 ---
 title: "POLS 904 Final Project"
-subtitle: "Simulation Study on Causal Forest"
+subtitle: "Monte Carlo Simulation on Causal Forest"
 author: "Jiacheng He"
 date: "December 13, 2017"
 output: beamer_presentation
@@ -8,7 +8,7 @@ output: beamer_presentation
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-setwd("C:/Users/j774h/OneDrive/POLS904/Project904/Project904")
+setwd("../Project904")
 devtools::load_all()
 library(ggplot2)
 library(dplyr)
@@ -130,7 +130,7 @@ Fix $n=1000$, try $d=2, 4, 10, 20, 40$
 ## Sample Size and Covariate Size
 
 ```{r}
-load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_n_DGP1.RData")
+load("../output_df/output_n_DGP1.RData")
 p1 <- output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(n), MSE)) + 
@@ -142,7 +142,7 @@ p2 <- output %>%
   scale_y_continuous(limit = c(0.25, 1)) +
   labs(x = "n", y = "Coverage Rate", title = "DGP1: constant tau")
 
-load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_d_DGP1.RData")
+load("../output_df/output_d_DGP1.RData")
 p5 <- output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(d), MSE)) + 
@@ -154,7 +154,7 @@ p6 <- output %>%
   scale_y_continuous(limit = c(0.6, 1)) +
   labs(x = "d", y = "Coverage Rate", title = "DGP1: constant tau")
 
-load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_n_DGP2.RData")
+load("../output_df/output_n_DGP2.RData")
 p3 <- output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(n), MSE)) + 
@@ -166,7 +166,7 @@ p4 <- output %>%
   scale_y_continuous(limit = c(0.25, 1)) +
   labs(x = "n", y = "Coverage Rate", title = "DGP2: heterogeneous tau")
 
-load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_d_DGP2.RData")
+load("../output_df/output_d_DGP2.RData")
 p7 <- output %>% 
   ggplot() + 
   geom_boxplot(aes(factor(d), MSE)) + 
@@ -208,7 +208,7 @@ I try varying five tuning parameters, one at a time. I use DGP2 and fix $n=1000,
 1. Try sample fraction $s = 0.1, 0.2, 0.3, 0.4, 0.5$
 
 ```{r results='asis'}
-load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_s.RData")
+load("../output_df/output_s.RData")
 output %>% 
   group_by(s) %>% 
   summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
@@ -221,7 +221,7 @@ output %>%
 2. Try # covariates in each tree training $t = 4, 5, 6, 7, 8$
 
 ```{r results='asis'}
-load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_t.RData")
+load("../output_df/output_t.RData")
 output %>% 
   group_by(t) %>% 
   summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
@@ -234,7 +234,7 @@ output %>%
 3. Try # trees $b = 500, 1000, 2000, 4000, 6000$
 
 ```{r results='asis'}
-load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_b.RData")
+load("../output_df/output_b.RData")
 output %>% 
   group_by(b) %>% 
   summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
@@ -247,7 +247,7 @@ output %>%
 4. Try minimun node size = 0, 10, 20, 40, 80
 
 ```{r results='asis'}
-load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_size.RData")
+load("../output_df/output_size.RData")
 output %>% 
   group_by(size) %>% 
   summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
@@ -260,7 +260,7 @@ output %>%
 5. Try $\lambda = 0.1, 1, 5, 10, 100$
 
 ```{r results='asis'}
-load("C:/Users/j774h/OneDrive/POLS904/Project904/output_df/output_lambda.RData")
+load("../output_df/output_lambda.RData")
 output %>% 
   group_by(lambda) %>% 
   summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
