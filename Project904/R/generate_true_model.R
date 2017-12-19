@@ -5,10 +5,10 @@
 #' @import dplyr
 #' @export
 #'
-#' @param X The covariate matrix
-#' @param DGP_tau An expression, the DGP for tau
-#' @param DGP_e An expression, the DGP for e
-#' @param DGP_m An expression, the DGP for m
+#' @param DGP Which data generating process to adopt
+#' @param d Covariate dimension
+#' @param n Sample size
+#' @param cdf Covariate distribution, default to U(0,1)
 #' @param noise_sd The standard deviation of the Gaussian noise of the model
 #'
 #' @return A list of X, Y, W, tau, e, and m. Prepare for the subsequent use of model fitting and evaluation.
@@ -17,9 +17,17 @@
 #'
 
 
-generate_true_model <- function(X, DGP_tau, DGP_e, DGP_m, noise_sd=1) {
+generate_true_model <- function(DGP, d, n, cdf="unif", noise_sd=1) {
 
-  n <- dim(X)[1]
+  if (is.list(DGP)) {
+    DGP_tau <- DGP$tau
+    DGP_e <- DGP$e
+    DGP_m <- DGP$m
+  } else {
+    stop("You fuck up the DGP")
+  }
+
+  X <- build_covariates(d, n, cdf = cdf)
 
   if (is.numeric(DGP_tau)) {tau <- rep(DGP_tau, n)
   } else if (is.expression(DGP_tau)) {

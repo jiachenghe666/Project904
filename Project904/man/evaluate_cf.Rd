@@ -2,25 +2,13 @@
 % Please edit documentation in R/evaluate_cf.R
 \name{evaluate_cf}
 \alias{evaluate_cf}
-\title{Evaluate the causal forest fitting}
+\title{Evaluate the MSE and coverage rate}
 \usage{
-evaluate_cf(cf, df, alpha = 0.05)
-}
-\arguments{
-\item{cf}{A causal forest object}
-
-\item{df}{A data frame which we evaluate the causal forest on}
-
-\item{alpha}{The p value of the confidence interval}
-}
-\value{
-A list of MSE and coverage rate
+evaluate_cf(df_fit, alpha = 0.05)
 }
 \description{
-This function accepts a causal forest fitting object and calculate the MSE and coverage rate
-}
-\examples{
-evaluate_df(cf_1, test_set)
+This function receives the point predictions and true values
+and compute the MSE and confidence coverage rate
 }
 \author{
 Jiacheng He

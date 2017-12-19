@@ -4,16 +4,16 @@
 \alias{generate_true_model}
 \title{Generate the components of the variables}
 \usage{
-generate_true_model(X, DGP_tau, DGP_e, DGP_m, noise_sd = 1)
+generate_true_model(DGP, d, n, cdf = "unif", noise_sd = 1)
 }
 \arguments{
-\item{X}{The covariate matrix}
+\item{DGP}{Which data generating process to adopt}
 
-\item{DGP_tau}{An expression, the DGP for tau}
+\item{d}{Covariate dimension}
 
-\item{DGP_e}{An expression, the DGP for e}
+\item{n}{Sample size}
 
-\item{DGP_m}{An expression, the DGP for m}
+\item{cdf}{Covariate distribution, default to U(0,1)}
 
 \item{noise_sd}{The standard deviation of the Gaussian noise of the model}
 }

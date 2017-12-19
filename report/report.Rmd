@@ -15,22 +15,236 @@ library(dplyr)
 library(pander)
 ```
 
-## R Markdown
+## Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+In social science, researchers might be interested to estimate the effect of a binary treatment (either treated or not treated). In experimental setting, individuals are randomly assigned into a control group and a treated group. Formally, denote $y_{i}$ as the outcome variable, $W_{i}$ as the treatment assignment variable ($W_{i}=1$ if in the treated group, $W_{i}=0$ if in the control group), and $X_{i}$ as a set of observed covariates (e.g. age, gender, race, eduction, etc). Then the researcher can estimate the classical linear model:
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+\begin{equation}
+Y_{i}=\tau W_{i}+X_{i}\beta+\epsilon_{i}
+\end{equation}
 
-```{r cars}
-summary(cars)
+Here $\tau=E[Y_{i} | W_{i}=1] - E[Y_{i}|W_{i}=0]$ is intepreted as the average treatment effect (ATE) across all individuals. $X_{i}$ is included into the regression to make sure of unconfoundedness and to reduce the variance of the estimator $\hat{\tau}$. 
+
+But sometimes researchers might want to go beyond ATE, and try to further estimate heterogeneous treatment effect and identify the subgroup of the population who will benefit the most (or least) from the treatment. One approach is to estimate the conditional average treatment effect (CATE) $\tau(X_{i})=E[Y_{i} | X_{i},W_{i}=1] - E[Y_{i}| X_{i},W_{i}=0]$, that is, express the treatment effect $\tau$ as a function of the observed covariates. 
+
+Causal forest developed by Wager and Athey (2017) aims to algorithmically search for the covariate space, identify the subspace where heterogeneity exists, and estimate the CATE in these subspaces. It is very similar to the popular random forest method. Wager and Athey (2017) also derived asymptotic distribution of the causal forest estimator so that statistical inference and hypothesis test become feasible when adopting this forest based method.
+
+In this project, I run Monte Carlo simulation on the causal forest to examine its finite sample perfomance, such as the mean squared error (MSE) and the confidence interval coverage rate. 
+
+
+## Model Framework 
+
+Consider a simple additive model. Define $\tau(X_{i})=E[Y_{i} | X_{i}, W_{i}=1] - E[Y_{i} | X_{i}, W_{i}=0]$ We will have such relationship:
+
+$$ E[Y_{i} | X_{i}, W_{i}=1] =  E[Y_{i} | X_{i}, W_{i}=0]+W_{i}\cdot \tau(X_{i})$$
+
+With some derivation, we will have such relationship:
+
+$$Y_{i}=m(X_{i})+\frac{W_{i}}{2}\tau(X_{i})+\frac{1-W_{i}}{2}\tau(X_{i})+\epsilon_{i}$$
+
+where
+
+
+$$
+\begin{aligned}
+\tau(X_{i})&=E[Y_{i} | X_{i}, W_{i}=1] - E[Y_{i} | X_{i}, W_{i}=0] \\
+m(X_{i})&=E[Y_{i} | X_{i}] \\
+e(X_{i})&=E[W_{i} | X_{i}]
+\end{aligned}
+$$
+
+Both $\tau(\cdot)$, $m(\cdot)$, and $e(\cdot)$ are nonparametric functions of the observed covariates $X_{i}$.
+
+There are several challenges in nonparametrically estimate the CATE function $\tau(X_{i})$. First, in real world application, we never observe the true individual treatment effect $\tau_{i}$. At each moment, an individual is either in the treated status or in the non-treated status, so we never know what would have happened to the individual if the individual would have shifted his/her status. This is the fundamental problem in causal inference. As a result of the absence of the true $\tau_{i}$, we can not perform cross validation, which is the routine in predictive machine learning.
+
+Second, the existence of non-constant $m(\cdot)$ and $e(\cdot)$ will tend to confound our estimation, as I showed in the final presentation.
+
+
+## Causal Forest
+
+The estimation algorithm of the causal forest is very closed to the random forest. There are two major divergence:
+
+1. When growing each tree in the causal forest, we place the split at the point $\tilde{x_{i}}$, which maximizes the difference of $\hat{E}[Y_{i} | X_{i}=x_{i}, W_{i}=1] - \hat{E}[Y_{i} | X_{i}=x_{i}, W_{i}=0]$ ($\hat{\tau}$) across the two sides of $\tilde{x_{i}}$. While in the case of random forest we place the split based on $\hat{E}[Y_{i} | X_{i}=x_{i}]$ ($\hat{y}$).
+
+2. When growing each tree, we use half of the training sample to do Step 1 above (placing split, identifying heterogenity covariate subspace), and use the other half of the training sample to calculate the $\hat{\tau}$ (estimation of the CATE in that subspace). Wager and Athey (2017) refer to this criterion as "honest splitting". 
+
+Also, similar to random forest, in causal forest algorithm it is not necessary to implement regularization or pruning. 
+
+
+## Simulation Setup
+
+In the Monte Carlo simulation experiment, I am interested to see how the algorithm performs as sample size and number of covariate change, under two different senarios: 1. constant treatment effect; 2. heterogeneous treatment effect. I set up two data generating processes (DGP) as:
+
+DGP1 (constant $\tau$)
+
+$$
+\begin{aligned}
+\tau(X_{i})&=0  \\
+e(X_{i})&=(1+f_{beta}^{2,4}(X_{1i}))/4 \\
+m(X_{i})&=2X_{1i}-1 
+\end{aligned}
+$$
+
+where $f_{beta}^{2,4}(\cdot)$ is the density function of Beta distribution with shape parameters 2 and 4.
+
+DGP2 (heterogeneous $\tau$)
+$$
+\begin{aligned}
+\tau(X_{i})&=1+\frac{1}{(1+e^{-20(X_{1i}-1/3)})(1+e^{-20(X_{2i}-1/3)})} \\  
+e(X_{i})&=0.5  \\
+m(X_{i})&=0  \\
+\end{aligned}
+$$
+Training causal forests also requires setting up tuning parameters, the same as when we train random forests. In this project, I also try to vary different tuning paramters and evaluate the performance of these trained models. The tuning parameters I try are as follows: (1) sample fraction used in growing each tree; (2) covariates used in growing each tree; (3) Number of trees to build the forest; (4) Minimun number of observations in each terminal leaf; (5) Regularization parameter $\lambda$. 
+
+Please keep in mind that cross validation is feasible in treatment effect estimation. So in practice there is no general guidance to select these tuning parameters in the training stage. Evaluation of choices of tuning parameters is only possible when we assume a data generating process and hence know the true $\tau_{i}$ in Monte Carlo simulation. And we can only implement the evaluation in the test set.
+
+I draw $X_{i}$ ~ $U(0,1)^{d}$, $W_{i}$ ~ $binom(1,e(X_{i}))$, $\epsilon_{i}$ ~ $N(0,1)$. ($d$ is the number of covariates). Then I train the causal forest model on a training set, and evaluate the trained model on a test set. For each senario, I replicate it for 100 times. Then I plot the box plot of the MSE and 95% confidence interval coverage rate.
+
+
+
+## Result
+
+### Sample Size and Number of Covariates
+
+First, I will look at how the performance of the causal forest respond to the change of sample size $n$ and number of covariates $d$:
+
+1. Fix $d=10$, try $n=100, 500, 1000, 2000, 5000$;
+
+2. Fix $n=1000$, try $d=2, 4, 10, 20, 40$;
+
+
+```{r, echo=FALSE}
+load("../output_df/output_n_DGP1.RData")
+p1 <- output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(n), MSE)) + 
+  scale_y_continuous(limit = c(0, 1.1)) +
+  labs(x = "n", title = "DGP1: constant tau")
+p2 <- output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(n), coverage)) + 
+  scale_y_continuous(limit = c(0.25, 1)) +
+  labs(x = "n", y = "Coverage Rate", title = "DGP1: constant tau")
+
+load("../output_df/output_d_DGP1.RData")
+p5 <- output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(d), MSE)) + 
+  scale_y_continuous(limit = c(0, 0.25)) +
+  labs(x = "d", title = "DGP1: constant tau")
+p6 <- output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(d), coverage)) + 
+  scale_y_continuous(limit = c(0.6, 1)) +
+  labs(x = "d", y = "Coverage Rate", title = "DGP1: constant tau")
+
+load("../output_df/output_n_DGP2.RData")
+p3 <- output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(n), MSE)) + 
+    scale_y_continuous(limit = c(0, 1.1)) +
+  labs(x = "n", title = "DGP2: heterogeneous tau")
+p4 <- output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(n), coverage)) + 
+  scale_y_continuous(limit = c(0.25, 1)) +
+  labs(x = "n", y = "Coverage Rate", title = "DGP2: heterogeneous tau")
+
+load("../output_df/output_d_DGP2.RData")
+p7 <- output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(d), MSE)) + 
+  scale_y_continuous(limit = c(0, 0.25)) +
+  labs(x = "d", title = "DGP2: heterogeneous tau")
+p8 <- output %>% 
+  ggplot() + 
+  geom_boxplot(aes(factor(d), coverage)) + 
+  scale_y_continuous(limit = c(0.6, 1)) +
+  labs(x = "d", y = "Coverage Rate", title = "DGP2: heterogeneous tau")
+
+multiplot(p1, p2, p3, p4, cols = 2)
+  
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r, echo=FALSE}
+
+multiplot(p5, p6, p7, p8, cols = 2)
+  
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+In both data generating processes, only the first two covariates $X1$, $X2$ contribute to the $\tau(\cdot)$ function. Therefore, adding extra covariates is purely adding "noise" to the causal forest algorithm. We should expect the variance of the heterogenous effect estimates increases as $d$ increases. 
+
+### Tuning Parameters
+
+I try varying five tuning parameters, one at a time. I use DGP2 and fix $n=1000, d=10$
+
+1. Sample fraction used in each tree training; (default 0.5)
+2. Covariates used in each tree training; (default $\frac{2}{3}d$)
+3. Number of trees; (default 2000)
+4. Minimun # observations in each terminal node; (default NULL)
+5. Regularization parameter $\lambda$; (default 0)
+
+
+
+1. Try sample fraction $s = 0.1, 0.2, 0.3, 0.4, 0.5$
+
+```{r results='asis', echo=FALSE}
+load("../output_df/output_s.RData")
+output %>% 
+  group_by(s) %>% 
+  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
+  pandoc.table()
+```
+
+
+2. Try # covariates in each tree training $t = 4, 5, 6, 7, 8$
+
+```{r results='asis', echo=FALSE}
+load("../output_df/output_t.RData")
+output %>% 
+  group_by(t) %>% 
+  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
+  pandoc.table()
+```
+
+
+
+3. Try # trees $b = 500, 1000, 2000, 4000, 6000$
+
+```{r results='asis', echo=FALSE}
+load("../output_df/output_b.RData")
+output %>% 
+  group_by(b) %>% 
+  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
+  pandoc.table()
+```
+
+
+
+4. Try minimun node size = 0, 10, 20, 40, 80
+
+```{r results='asis', echo=FALSE}
+load("../output_df/output_size.RData")
+output %>% 
+  group_by(size) %>% 
+  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
+  pandoc.table()
+```
+
+
+
+5. Try $\lambda = 0.1, 1, 5, 10, 100$
+
+```{r results='asis', echo=FALSE}
+load("../output_df/output_lambda.RData")
+output %>% 
+  group_by(lambda) %>% 
+  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
+  pandoc.table()
+```
+
+
+

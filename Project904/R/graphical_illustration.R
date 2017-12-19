@@ -1,3 +1,5 @@
+#' @title Visualize the replication
+#' @description This function is used to generate the plot in the "An Example" Section of the slide
 #' @author Jiacheng He
 #'
 #' @import grf
@@ -10,22 +12,10 @@
 #'
 
 
+graphical_illustration <- function(DGP, d, n_train, n_test) {
 
-
-
-graphical_illustration <- function(DGP, d, n) {
-
-  X <- build_covariates(d = d, n = n)
-  test_index <- sample(1:n, n/2, replace = FALSE)
-  X_test <- X[test_index, ]
-  X_train <- X[-test_index, ]
-
-  if (is.list(DGP)) {
-    df_train <- generate_true_model(X_train, DGP_tau = DGP$tau, DGP_e = DGP$e, DGP_m = DGP$m)
-    df_test <- generate_true_model(X_test, DGP_tau = DGP$tau, DGP_e = DGP$e, DGP_m = DGP$m)
-  } else {
-    stop("You fuck up the DGP")
-  }
+  df_train <- generate_true_model(DGP, d, n_train)
+  df_test <- generate_true_model(DGP, d, n_test)
 
   cf <- causal_forest(df_train$X, df_train$Y, df_train$W)
 

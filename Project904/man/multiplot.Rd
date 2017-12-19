@@ -10,5 +10,5 @@
 multiplot(..., plotlist = NULL, file, cols = 1, layout = NULL)
 }
 \description{
-Borrowed from internet
+Borrowed from the internet
 }

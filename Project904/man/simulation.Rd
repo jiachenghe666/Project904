@@ -4,7 +4,8 @@
 \alias{simulation}
 \title{The function accepts the key parameters to execute everything}
 \usage{
-simulation(param_list, param_type, DGP, bs_num = 100, file_name = NULL)
+simulation(param_list, param_type, DGP, bs_num = 100, n_test = 100,
+  evaluate = FALSE, file_name = NULL)
 }
 \arguments{
 \item{param_list}{The values of the parameter we want to vary}
@@ -14,6 +15,8 @@ simulation(param_list, param_type, DGP, bs_num = 100, file_name = NULL)
 \item{DGP}{The list of data generating process}
 
 \item{bs_num}{How many times of replication for each senario}
+
+\item{n_test}{Sample size of the test set}
 
 \item{file_name}{The name of the file we want to the save the results in}
 }
