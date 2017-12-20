@@ -116,52 +116,16 @@ First, I will look at how the performance of the causal forest respond to the ch
 
 ```{r, echo=FALSE}
 load("../output_df/output_n_DGP1.RData")
-p1 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(n), MSE)) + 
-  scale_y_continuous(limit = c(0, 1.1)) +
-  labs(x = "n", title = "DGP1: constant tau")
-p2 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(n), coverage)) + 
-  scale_y_continuous(limit = c(0.25, 1)) +
-  labs(x = "n", y = "Coverage Rate", title = "DGP1: constant tau")
+box_n_DGP1 <- box_plot_final_output(final_output, x_lab = "n", title = "DGP1: constant tau")
 
 load("../output_df/output_d_DGP1.RData")
-p5 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(d), MSE)) + 
-  scale_y_continuous(limit = c(0, 0.25)) +
-  labs(x = "d", title = "DGP1: constant tau")
-p6 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(d), coverage)) + 
-  scale_y_continuous(limit = c(0.6, 1)) +
-  labs(x = "d", y = "Coverage Rate", title = "DGP1: constant tau")
+box_d_DGP1 <- box_plot_final_output(final_output, x_lab = "d", title = "DGP1: constant tau")
 
 load("../output_df/output_n_DGP2.RData")
-p3 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(n), MSE)) + 
-    scale_y_continuous(limit = c(0, 1.1)) +
-  labs(x = "n", title = "DGP2: heterogeneous tau")
-p4 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(n), coverage)) + 
-  scale_y_continuous(limit = c(0.25, 1)) +
-  labs(x = "n", y = "Coverage Rate", title = "DGP2: heterogeneous tau")
+box_n_DGP2 <- box_plot_final_output(final_output, x_lab = "n", title = "DGP2: heterogeneous tau")
 
 load("../output_df/output_d_DGP2.RData")
-p7 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(d), MSE)) + 
-  scale_y_continuous(limit = c(0, 0.25)) +
-  labs(x = "d", title = "DGP2: heterogeneous tau")
-p8 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(d), coverage)) + 
-  scale_y_continuous(limit = c(0.6, 1)) +
-  labs(x = "d", y = "Coverage Rate", title = "DGP2: heterogeneous tau")
+box_d_DGP2 <- box_plot_final_output(final_output, x_lab = "d", title = "DGP2: heterogeneous tau")
 
 multiplot(p1, p2, p3, p4, cols = 2)
   
