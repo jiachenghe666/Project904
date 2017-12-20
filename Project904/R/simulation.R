@@ -35,20 +35,21 @@ simulation <- function(param_list, param_type, DGP, bs_num=100, n_test=100, eval
       df_test <- generate_true_model(DGP, d = param, n = n_test)
     }
 
-    cf_list <- mclapply(1:bs_num, function(b){
-      train_cf(DGP, param, param_type)
+    fit_list <- mclapply(1:bs_num, function(b){
+      train_cf(DGP, param, param_type) %>%
+        test_cf(df_test) %>%
+        mutate(rep = b)
       }, mc.cores = core_num)
 
-    fit <- mclapply(cf_list,
-                    partial(test_cf, df_test = df_test),
-                    mc.cores = core_num) %>%
-      reduce(bind_rows)
+    fit <- reduce(fit_list, bind_rows)
 
-    fit$rep <- rep(1:bs_num, each = n_test)
     fit$param <- param
 
     output_list[[i]] <- fit
     i <- i + 1
+
+    rm(fit_list)
+    rm(fit)
   }
 
   final_output <- reduce(output_list, bind_rows)
