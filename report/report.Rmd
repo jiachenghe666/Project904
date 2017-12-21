@@ -3,15 +3,18 @@ title: "POLS 904 Final Project"
 subtitle: "Monte Carlo Simulation on Causal Forest"
 author: "Jiacheng He"
 date: "December 18, 2017"
-output: pdf_document
+output: 
+  pdf_document: 
+    fig_caption: true
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r global, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
 setwd("../Project904")
 devtools::load_all()
 library(ggplot2)
 library(dplyr)
+library(purrr)
 library(pander)
 ```
 
@@ -99,7 +102,7 @@ Training causal forests also requires setting up tuning parameters, the same as 
 
 Please keep in mind that cross validation is feasible in treatment effect estimation. So in practice there is no general guidance to select these tuning parameters in the training stage. Evaluation of choices of tuning parameters is only possible when we assume a data generating process and hence know the true $\tau_{i}$ in Monte Carlo simulation. And we can only implement the evaluation in the test set.
 
-I draw $X_{i}$ ~ $U(0,1)^{d}$, $W_{i}$ ~ $binom(1,e(X_{i}))$, $\epsilon_{i}$ ~ $N(0,1)$. ($d$ is the number of covariates). Then I train the causal forest model on a training set, and evaluate the trained model on a test set. For each senario, I replicate it for 100 times. Then I plot the box plot of the MSE and 95% confidence interval coverage rate.
+I draw $X_{i}$ ~ $U(0,1)^{d}$, $W_{i}$ ~ $binom(1,e(X_{i}))$, $\epsilon_{i}$ ~ $N(0,1)$. ($d$ is the number of covariates). Then I train the causal forest model on a training set, and evaluate the trained model on a test set with 100 data points. For each senario, I replicate it for 100 times. For each replication I generate a new training set, while the test set is invariant for all replications. Then I plot the box plot of the MSE and 95% confidence interval coverage rate.
 
 
 
@@ -115,35 +118,83 @@ First, I will look at how the performance of the causal forest respond to the ch
 
 
 ```{r, echo=FALSE}
+n_y_scale_MSE <- c(0, 0.91)
+n_y_scale_coverage <- c(0.25, 1.0)
+
+d_y_scale_MSE <- c(0, 0.25)
+d_y_scale_coverage <- c(0.39, 1.0)
+
+n_y_scale_sigma <- c(0, 1.0)
+d_y_scale_sigma <- c(0, 1.26)
+
 load("../output_df/output_n_DGP1.RData")
-box_n_DGP1 <- box_plot_final_output(final_output, x_lab = "n", title = "DGP1: constant tau")
+box_n_DGP1 <- box_plot_final_output(final_output, x_lab = "n", title = "DGP1: constant tau", y_scale_MSE = n_y_scale_MSE, y_scale_coverage = n_y_scale_coverage, y_scale_sigma = n_y_scale_sigma)
 
 load("../output_df/output_d_DGP1.RData")
-box_d_DGP1 <- box_plot_final_output(final_output, x_lab = "d", title = "DGP1: constant tau")
+box_d_DGP1 <- box_plot_final_output(final_output, x_lab = "d", title = "DGP1: constant tau", y_scale_MSE = d_y_scale_MSE, y_scale_coverage = d_y_scale_coverage, y_scale_sigma = d_y_scale_sigma)
 
 load("../output_df/output_n_DGP2.RData")
-box_n_DGP2 <- box_plot_final_output(final_output, x_lab = "n", title = "DGP2: heterogeneous tau")
+box_n_DGP2 <- box_plot_final_output(final_output, x_lab = "n", title = "DGP2: heterogeneous tau", y_scale_MSE = n_y_scale_MSE, y_scale_coverage = n_y_scale_coverage, y_scale_sigma = n_y_scale_sigma)
 
 load("../output_df/output_d_DGP2.RData")
-box_d_DGP2 <- box_plot_final_output(final_output, x_lab = "d", title = "DGP2: heterogeneous tau")
+box_d_DGP2 <- box_plot_final_output(final_output, x_lab = "d", title = "DGP2: heterogeneous tau", y_scale_MSE = d_y_scale_MSE, y_scale_coverage = d_y_scale_coverage, y_scale_sigma = d_y_scale_sigma)
+  
+```
 
-multiplot(p1, p2, p3, p4, cols = 2)
+```{r fig1, echo=FALSE, fig.cap="\\label{fig:fig1}MSE and Coverage Rate with Different Sample Size n", fig.pos = "h!", out.extra=""}
+
+multiplot(box_n_DGP1$MSE, 
+          box_n_DGP1$coverage, 
+          box_n_DGP2$MSE, 
+          box_n_DGP2$coverage, cols = 2)
   
 ```
 
 
+Figure \ref{fig:fig1} displays the MSE and 95\% confidence interval coverage rate. Under the data generating process of constant treatment effect, the MSE decays very fast as sample size $n$ increases. Under the DGP of heterogeneous treatment effect, the MSE is slightly larger and it decays slightly slower. When $n$ is as large as 5000, we achieve considerably small MSE.
 
-```{r, echo=FALSE}
+Surprisingly, the confidence interval performs very well for the DGP of constant $\tau$. Even in small sample $n=100$, the simulation coverage rate achieves about 95\%. What is interesting is that the confidence interval seems "over-accurate" for DGP1. In the case of $n=5000$, we obtain almost 100\% accuracy that the 95\% confidence interval will always cover the true $\tau$. 
 
-multiplot(p5, p6, p7, p8, cols = 2)
+As for the DGP2, we need larger sample for the confidence coverage to converge. When $n=100$, in median the 95\% confidence interval successfully covers the true $\tau$ for only about 60\% of the time. When $n=1000$, the median coverage rate achieves 95\%. However, when $n=5000$, we have the "over-accurate" issue again.
+
+```{r fig2, echo=FALSE, fig.cap="\\label{fig:fig2}Standard Errors with Different Sample Size n", fig.pos = "h!", out.extra=""}
+
+multiplot(box_n_DGP1$se, 
+          box_n_DGP2$se, cols = 2)
+  
+```
+
+In Figure \ref{fig:fig2} I plot the standard errors in the simulation. We can see that the standard errors are pretty stable and have not converged even when $n=5000$. Theoretically, as sample size increases, we should have smaller standard error for our estimator. But it is clearly not the case here. Figure \ref{fig:fig1} has told us that the MSE is shrinking and basically converges when $n=5000$. In other words, the point estimates are very close to the true value when $n=5000$. Therefore, I conjecture that the standard errors are "too large" in large sample, and hence the 95\% confidence intervals are "too wide", which might lead us to the situation that, in hypothesis testing we are less likely to reject than we should.
+
+```{r fig3, echo=FALSE, fig.cap="\\label{fig:fig3}MSE and Coverage Rate with Different Numbers of Covariates d", out.extra=""}
+
+multiplot(box_d_DGP1$MSE, 
+          box_d_DGP1$coverage, 
+          box_d_DGP2$MSE, 
+          box_d_DGP2$coverage, cols = 2)
   
 ```
 
 In both data generating processes, only the first two covariates $X1$, $X2$ contribute to the $\tau(\cdot)$ function. Therefore, adding extra covariates is purely adding "noise" to the causal forest algorithm. We should expect the variance of the heterogenous effect estimates increases as $d$ increases. 
 
+The simulation results of DGP2 with heterogeneous treatment effect meet our expectation. Although for resaons when the number of the covariates increases from 2 to 10, the MSE decreases a little bit, the MSE does not keep decreasring when go beyond 10. In fact, the variance of the MSE increases when we increase the number of the noise covariates from 10 to 40. The same happens to the confidence interval coverage rate. Since the sample size is defaulted to 1000, we already achieve a pretty good median coverage rate. As we have more noise covariates, the coverage rate becomes more and more unstable. When $d=40$ (that is, most of the observed covariates are not predictive to $\tau$ at all), in some test data points we will have very small (say, only 40\%) coverage rate by chance.
+
+However, this is not the case for DGP1. As we see in Figure \ref{fig:fig3}, the MSE is shrinking when the number of noise covariates increases. And again we achieve almost 100\% accuracy in the 95\% confidence intervals when $d=40$. This result is puzzling.
+
+```{r fig4, echo=FALSE, fig.cap="\\label{fig:fig4}Standard Errors with Different Numbers of Covariates d"}
+
+multiplot(box_d_DGP1$se, 
+          box_d_DGP2$se, cols = 2)
+  
+```
+
+
+
 ### Tuning Parameters
 
-I try varying five tuning parameters, one at a time. I use DGP2 and fix $n=1000, d=10$
+I try varying five tuning parameters, one at a time. The simulation setting is default to: DGP2; $n_train=1000$; $d=10$; $n_test=100$.
+
+These are the tuning parameters I test:
 
 1. Sample fraction used in each tree training; (default 0.5)
 2. Covariates used in each tree training; (default $\frac{2}{3}d$)
@@ -151,63 +202,81 @@ I try varying five tuning parameters, one at a time. I use DGP2 and fix $n=1000,
 4. Minimun # observations in each terminal node; (default NULL)
 5. Regularization parameter $\lambda$; (default 0)
 
+In this section I only report the median MSE and median coverage rate for each senario. The simulation results are as follows:
 
+The causal_forest() function in the grf package does not allow me to set the sample.fraction parameter smaller than 0.5. So I try to vary the sample.fraction from 0.1 to 0.5. As we see, perhaps we should stick to the default value 0.5.
 
-1. Try sample fraction $s = 0.1, 0.2, 0.3, 0.4, 0.5$
+I Try sample fraction $s = 0.1, 0.2, 0.3, 0.4, 0.5$
 
-```{r results='asis', echo=FALSE}
+```{r results='asis', echo=FALSE, }
 load("../output_df/output_s.RData")
-output %>% 
+final_output %>% 
+  evaluate_cf() %>% 
+  reduce(bind_rows) %>%
+  rename(s = param) %>% 
   group_by(s) %>% 
-  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
-  pandoc.table()
+  summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
+  round(digits = 3) %>% 
+  pandoc.table(caption = "MSE and Coverage Rate with Different Sample Fraction s")
 ```
 
 
-2. Try # covariates in each tree training $t = 4, 5, 6, 7, 8$
+In causal forest we also use a subset of sample and subset of covariates to grow each tree. The default value of subsetting covariates is $\frac{2}{3}d$. In this case, it is 7. As we see, 7 covariates do give us the best performance, in terms of both MSE and coverage rate.
 
 ```{r results='asis', echo=FALSE}
 load("../output_df/output_t.RData")
-output %>% 
+final_output %>% 
+  evaluate_cf() %>% 
+  reduce(bind_rows) %>%
+  rename(t = param) %>% 
   group_by(t) %>% 
-  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
-  pandoc.table()
+  summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
+  round(digits = 3) %>% 
+  pandoc.table(caption = "MSE and Coverage Rate with Different Number of Training Covariates t")
 ```
 
-
-
-3. Try # trees $b = 500, 1000, 2000, 4000, 6000$
+Intuitively, the more trees we train, the more variance we will average out. As number of trees increase, we do get smaller and smaller MSE as we tarin more trees. However, the gain is only marginal after we go beyond 1000 trees. But the computer training time is basically linear in the number of training trees. On the other hand, the coverage rate also decreases when we train more trees. Thus it is not clear whether it is worthwhile to train more than 2000 trees.
 
 ```{r results='asis', echo=FALSE}
 load("../output_df/output_b.RData")
-output %>% 
+final_output %>% 
+  evaluate_cf() %>% 
+  reduce(bind_rows) %>%
+  rename(b = param) %>% 
   group_by(b) %>% 
-  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
-  pandoc.table()
+  summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
+  round(digits = 3) %>% 
+  pandoc.table(caption = "MSE and Coverage Rate with Different Number of Trees b")
 ```
 
 
 
-4. Try minimun node size = 0, 10, 20, 40, 80
+The default setting of the algorithm does not set up the minimum node size. I try to vary the minimun node size from 0 to 80. When it defualt to 0, we achieve the best coverage rate. So we should stick to the default value 0.
 
 ```{r results='asis', echo=FALSE}
 load("../output_df/output_size.RData")
-output %>% 
+final_output %>% 
+  evaluate_cf() %>% 
+  reduce(bind_rows) %>%
+  rename(size = param) %>% 
   group_by(size) %>% 
-  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
-  pandoc.table()
+  summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
+  round(digits = 3) %>% 
+  pandoc.table(caption = "MSE and Coverage Rate with Different Minimum Node Size")
 ```
 
-
-
-5. Try $\lambda = 0.1, 1, 5, 10, 100$
+Regularization is one of the most prominent features of machine learning algorithms. When we train decision tree, we usually add a regularization term in the optimization stage and perform backward pruning to prevent over-fitting. But when we do ensemble and average out many trees, we usually do not perform regularization. I try to vary the regularization parameter $\lambda$ from 0 (default value) to 10 to see if we need to regularize in causal forest. The results below indicate that we achieve the best coverage rate, as well as second-best MSE. So, the answer is no we do not need regularization. 
 
 ```{r results='asis', echo=FALSE}
 load("../output_df/output_lambda.RData")
-output %>% 
+final_output %>% 
+  evaluate_cf() %>% 
+  reduce(bind_rows) %>%
+  rename(lambda = param) %>% 
   group_by(lambda) %>% 
-  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
-  pandoc.table()
+  summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
+  round(digits = 3) %>% 
+  pandoc.table(caption = "MSE and Coverage Rate with Different Regularization Parameter")
 ```
 
 
