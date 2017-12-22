@@ -6,7 +6,9 @@ date: "December 18, 2017"
 output: 
   pdf_document: 
     fig_caption: true
+bibliography: ref.bib
 ---
+
 
 ```{r global, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
@@ -18,7 +20,7 @@ library(purrr)
 library(pander)
 ```
 
-## Introduction
+# Introduction
 
 In social science, researchers might be interested to estimate the effect of a binary treatment (either treated or not treated). In experimental setting, individuals are randomly assigned into a control group and a treated group. Formally, denote $y_{i}$ as the outcome variable, $W_{i}$ as the treatment assignment variable ($W_{i}=1$ if in the treated group, $W_{i}=0$ if in the control group), and $X_{i}$ as a set of observed covariates (e.g. age, gender, race, eduction, etc). Then the researcher can estimate the classical linear model:
 
@@ -28,53 +30,35 @@ Y_{i}=\tau W_{i}+X_{i}\beta+\epsilon_{i}
 
 Here $\tau=E[Y_{i} | W_{i}=1] - E[Y_{i}|W_{i}=0]$ is intepreted as the average treatment effect (ATE) across all individuals. $X_{i}$ is included into the regression to make sure of unconfoundedness and to reduce the variance of the estimator $\hat{\tau}$. 
 
-But sometimes researchers might want to go beyond ATE, and try to further estimate heterogeneous treatment effect and identify the subgroup of the population who will benefit the most (or least) from the treatment. One approach is to estimate the conditional average treatment effect (CATE) $\tau(X_{i})=E[Y_{i} | X_{i},W_{i}=1] - E[Y_{i}| X_{i},W_{i}=0]$, that is, express the treatment effect $\tau$ as a function of the observed covariates. 
+But sometimes researchers might want to go beyond ATE, and try to further estimate heterogeneous treatment effect and identify the subgroup of the population who will benefit the most (or least) from the treatment. One approach is to estimate the conditional average treatment effect (CATE) $\tau(X_{i})=E[Y_{i} | X_{i},W_{i}=1] - E[Y_{i}| X_{i},W_{i}=0]$. That is, express the treatment effect $\tau$ as a function of the observed covariates. 
 
-Causal forest developed by Wager and Athey (2017) aims to algorithmically search for the covariate space, identify the subspace where heterogeneity exists, and estimate the CATE in these subspaces. It is very similar to the popular random forest method. Wager and Athey (2017) also derived asymptotic distribution of the causal forest estimator so that statistical inference and hypothesis test become feasible when adopting this forest based method.
+Causal forest developed by @causal_forest aims to algorithmically search for the covariate space, identify the subspace where heterogeneity exists, and estimate the CATE in these subspaces. It is very similar to the popular random forest method. @causal_forest also derived asymptotic distribution of the causal forest estimator so that statistical inference and hypothesis test become feasible when adopting this forest based method.
 
 In this project, I run Monte Carlo simulation on the causal forest to examine its finite sample perfomance, such as the mean squared error (MSE) and the confidence interval coverage rate. 
 
 
-## Model Framework 
+# Model and Algorithm
 
-Consider a simple additive model. Define $\tau(X_{i})=E[Y_{i} | X_{i}, W_{i}=1] - E[Y_{i} | X_{i}, W_{i}=0]$ We will have such relationship:
-
-$$ E[Y_{i} | X_{i}, W_{i}=1] =  E[Y_{i} | X_{i}, W_{i}=0]+W_{i}\cdot \tau(X_{i})$$
+Consider a simple additive model. For each individual $i$, we observe the outcome variable $y_{i}$, the treatment status $W_{i}$, and a vector of covairates $X_{i}$. Define $m(X_{i})=E[Y_{i} | X_{i}]$ as the conditional mean of the outcome (in regardless of individual $i$ is treated or not), $\tau(X_{i})=E[Y_{i} | X_{i}, W_{i}=1] - E[Y_{i} | X_{i}, W_{i}=0]$ as the CATE, and $e(X_{i})=E[W_{i} | X_{i}]$ is the conditional treatment propensity. These functions are not observed and we are interested to nonparametrically estimate $\tau(X_{i})$. 
 
 With some derivation, we will have such relationship:
 
 $$Y_{i}=m(X_{i})+\frac{W_{i}}{2}\tau(X_{i})+\frac{1-W_{i}}{2}\tau(X_{i})+\epsilon_{i}$$
 
-where
-
-
-$$
-\begin{aligned}
-\tau(X_{i})&=E[Y_{i} | X_{i}, W_{i}=1] - E[Y_{i} | X_{i}, W_{i}=0] \\
-m(X_{i})&=E[Y_{i} | X_{i}] \\
-e(X_{i})&=E[W_{i} | X_{i}]
-\end{aligned}
-$$
-
-Both $\tau(\cdot)$, $m(\cdot)$, and $e(\cdot)$ are nonparametric functions of the observed covariates $X_{i}$.
+where $\epsilon_{i}$ is a disturbance error term.
 
 There are several challenges in nonparametrically estimate the CATE function $\tau(X_{i})$. First, in real world application, we never observe the true individual treatment effect $\tau_{i}$. At each moment, an individual is either in the treated status or in the non-treated status, so we never know what would have happened to the individual if the individual would have shifted his/her status. This is the fundamental problem in causal inference. As a result of the absence of the true $\tau_{i}$, we can not perform cross validation, which is the routine in predictive machine learning.
 
-Second, the existence of non-constant $m(\cdot)$ and $e(\cdot)$ will tend to confound our estimation, as I showed in the final presentation.
+Second, the existence of non-constant $m(\cdot)$ and $e(\cdot)$ will tend to confound our estimation, as I showed in the presentation in the final exam day.
 
-
-## Causal Forest
-
-The estimation algorithm of the causal forest is very closed to the random forest. There are two major divergence:
+The training algorithm of the causal forest is very closed to the random forest. We first train a large number of causal trees, then average them to obtain the forest estimates. When growing each single tree, we randomly draw a subsample of both observations and covariates. Also, similar to random forest, in causal forest algorithm it is not necessary to implement regularization or pruning when growing each single tree. However, there are two major divergence:
 
 1. When growing each tree in the causal forest, we place the split at the point $\tilde{x_{i}}$, which maximizes the difference of $\hat{E}[Y_{i} | X_{i}=x_{i}, W_{i}=1] - \hat{E}[Y_{i} | X_{i}=x_{i}, W_{i}=0]$ ($\hat{\tau}$) across the two sides of $\tilde{x_{i}}$. While in the case of random forest we place the split based on $\hat{E}[Y_{i} | X_{i}=x_{i}]$ ($\hat{y}$).
 
-2. When growing each tree, we use half of the training sample to do Step 1 above (placing split, identifying heterogenity covariate subspace), and use the other half of the training sample to calculate the $\hat{\tau}$ (estimation of the CATE in that subspace). Wager and Athey (2017) refer to this criterion as "honest splitting". 
-
-Also, similar to random forest, in causal forest algorithm it is not necessary to implement regularization or pruning. 
+2. When growing each tree, we use half of the training sample to do Step 1 above (placing split, identifying heterogenity covariate subspace), and use the other half of the training sample to calculate the $\hat{\tau}$ (estimation of the CATE in that subspace). Wager and Athey (2017) refer to this criterion as "honest splitting". Honest splitting is a strategy to remedy the infeasibility of cross validation.
 
 
-## Simulation Setup
+# Simulation Setup
 
 In the Monte Carlo simulation experiment, I am interested to see how the algorithm performs as sample size and number of covariate change, under two different senarios: 1. constant treatment effect; 2. heterogeneous treatment effect. I set up two data generating processes (DGP) as:
 
@@ -100,15 +84,15 @@ m(X_{i})&=0  \\
 $$
 Training causal forests also requires setting up tuning parameters, the same as when we train random forests. In this project, I also try to vary different tuning paramters and evaluate the performance of these trained models. The tuning parameters I try are as follows: (1) sample fraction used in growing each tree; (2) covariates used in growing each tree; (3) Number of trees to build the forest; (4) Minimun number of observations in each terminal leaf; (5) Regularization parameter $\lambda$. 
 
-Please keep in mind that cross validation is feasible in treatment effect estimation. So in practice there is no general guidance to select these tuning parameters in the training stage. Evaluation of choices of tuning parameters is only possible when we assume a data generating process and hence know the true $\tau_{i}$ in Monte Carlo simulation. And we can only implement the evaluation in the test set.
+Please keep in mind that cross validation is not feasible in treatment effect estimation. So in practice there is no general guidance to select these tuning parameters in the training stage. What's more, evaluation of choices of tuning parameters is only possible when we assume a data generating process and hence know the true $\tau_{i}$ in Monte Carlo simulation (not in real data). And we can only implement the evaluation in the test set (not in cv set).
 
 I draw $X_{i}$ ~ $U(0,1)^{d}$, $W_{i}$ ~ $binom(1,e(X_{i}))$, $\epsilon_{i}$ ~ $N(0,1)$. ($d$ is the number of covariates). Then I train the causal forest model on a training set, and evaluate the trained model on a test set with 100 data points. For each senario, I replicate it for 100 times. For each replication I generate a new training set, while the test set is invariant for all replications. Then I plot the box plot of the MSE and 95% confidence interval coverage rate.
 
 
 
-## Result
+# Result
 
-### Sample Size and Number of Covariates
+## Sample Size and Number of Covariates
 
 First, I will look at how the performance of the causal forest respond to the change of sample size $n$ and number of covariates $d$:
 
@@ -157,7 +141,7 @@ Surprisingly, the confidence interval performs very well for the DGP of constant
 
 As for the DGP2, we need larger sample for the confidence coverage to converge. When $n=100$, in median the 95\% confidence interval successfully covers the true $\tau$ for only about 60\% of the time. When $n=1000$, the median coverage rate achieves 95\%. However, when $n=5000$, we have the "over-accurate" issue again.
 
-```{r fig2, echo=FALSE, fig.cap="\\label{fig:fig2}Standard Errors with Different Sample Size n", fig.pos = "h!", out.extra=""}
+```{r fig2, echo=FALSE, fig.cap="\\label{fig:fig2}Standard Errors with Different Sample Size n", fig.pos = "h!", out.extra="", fig.pos="h"}
 
 multiplot(box_n_DGP1$se, 
           box_n_DGP2$se, cols = 2)
@@ -166,7 +150,7 @@ multiplot(box_n_DGP1$se,
 
 In Figure \ref{fig:fig2} I plot the standard errors in the simulation. We can see that the standard errors are pretty stable and have not converged even when $n=5000$. Theoretically, as sample size increases, we should have smaller standard error for our estimator. But it is clearly not the case here. Figure \ref{fig:fig1} has told us that the MSE is shrinking and basically converges when $n=5000$. In other words, the point estimates are very close to the true value when $n=5000$. Therefore, I conjecture that the standard errors are "too large" in large sample, and hence the 95\% confidence intervals are "too wide", which might lead us to the situation that, in hypothesis testing we are less likely to reject than we should.
 
-```{r fig3, echo=FALSE, fig.cap="\\label{fig:fig3}MSE and Coverage Rate with Different Numbers of Covariates d", out.extra=""}
+```{r fig3, echo=FALSE, fig.cap="\\label{fig:fig3}MSE and Coverage Rate with Different Numbers of Covariates d", out.extra="", fig.pos="h!"}
 
 multiplot(box_d_DGP1$MSE, 
           box_d_DGP1$coverage, 
@@ -181,7 +165,7 @@ The simulation results of DGP2 with heterogeneous treatment effect meet our expe
 
 However, this is not the case for DGP1. As we see in Figure \ref{fig:fig3}, the MSE is shrinking when the number of noise covariates increases. And again we achieve almost 100\% accuracy in the 95\% confidence intervals when $d=40$. This result is puzzling.
 
-```{r fig4, echo=FALSE, fig.cap="\\label{fig:fig4}Standard Errors with Different Numbers of Covariates d"}
+```{r fig4, echo=FALSE, fig.cap="\\label{fig:fig4}Standard Errors with Different Numbers of Covariates d", fig.pos="h!"}
 
 multiplot(box_d_DGP1$se, 
           box_d_DGP2$se, cols = 2)
@@ -190,9 +174,9 @@ multiplot(box_d_DGP1$se,
 
 
 
-### Tuning Parameters
+## Tuning Parameters
 
-I try varying five tuning parameters, one at a time. The simulation setting is default to: DGP2; $n_train=1000$; $d=10$; $n_test=100$.
+I try varying five tuning parameters, one at a time. The simulation setting is default to: DGP2; $n_{train}=1000$; $d=10$; $n_{test}=100$.
 
 These are the tuning parameters I test:
 
@@ -217,7 +201,7 @@ final_output %>%
   group_by(s) %>% 
   summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
   round(digits = 3) %>% 
-  pandoc.table(caption = "MSE and Coverage Rate with Different Sample Fraction s")
+  pandoc.table(caption = "Different Sample Fraction s")
 ```
 
 
@@ -232,7 +216,7 @@ final_output %>%
   group_by(t) %>% 
   summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
   round(digits = 3) %>% 
-  pandoc.table(caption = "MSE and Coverage Rate with Different Number of Training Covariates t")
+  pandoc.table(caption = "Different Number of Training Covariates t")
 ```
 
 Intuitively, the more trees we train, the more variance we will average out. As number of trees increase, we do get smaller and smaller MSE as we tarin more trees. However, the gain is only marginal after we go beyond 1000 trees. But the computer training time is basically linear in the number of training trees. On the other hand, the coverage rate also decreases when we train more trees. Thus it is not clear whether it is worthwhile to train more than 2000 trees.
@@ -246,7 +230,7 @@ final_output %>%
   group_by(b) %>% 
   summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
   round(digits = 3) %>% 
-  pandoc.table(caption = "MSE and Coverage Rate with Different Number of Trees b")
+  pandoc.table(caption = "Different Number of Trees b")
 ```
 
 
@@ -262,7 +246,7 @@ final_output %>%
   group_by(size) %>% 
   summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
   round(digits = 3) %>% 
-  pandoc.table(caption = "MSE and Coverage Rate with Different Minimum Node Size")
+  pandoc.table(caption = "Different Minimum Node Size")
 ```
 
 Regularization is one of the most prominent features of machine learning algorithms. When we train decision tree, we usually add a regularization term in the optimization stage and perform backward pruning to prevent over-fitting. But when we do ensemble and average out many trees, we usually do not perform regularization. I try to vary the regularization parameter $\lambda$ from 0 (default value) to 10 to see if we need to regularize in causal forest. The results below indicate that we achieve the best coverage rate, as well as second-best MSE. So, the answer is no we do not need regularization. 
@@ -276,8 +260,13 @@ final_output %>%
   group_by(lambda) %>% 
   summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
   round(digits = 3) %>% 
-  pandoc.table(caption = "MSE and Coverage Rate with Different Regularization Parameter")
+  pandoc.table(caption = "Different Regularization Parameter lambda")
 ```
 
+# Discussion and Conclusion
 
+In this project I implement Monte Carlo simulation on the novel causal forest method (@causal_forest), which introduced the philosophy of predictive machine learning and the powerful random forest algorithm into heterogeneous treatment effect estimation and statistical inference. My simulation study shows that as sample size increases, the predictive accuracy of the point estimates increases rapidly. We obatin very good performance in terms of MSE when $n=5000$. However, the standard error estimates, which is one of the most distinguished features of their paper, does not significantly shrink as sample size increases, which might lead to an over-rejection problem in hypothesis testing. 
 
+I also examine the impact of varying the tuning parameters of the algorithm. My simulation results of the optimal tuning parameters are consistent with our common knowledge to the basic random forest algorithm: when growing each single tree, we should set the number of covariates as $\frac{2}{3}d$ and avoid to put regularization and restriction. And finally, the more trees, the better predictive accuracy.
+
+# Reference
