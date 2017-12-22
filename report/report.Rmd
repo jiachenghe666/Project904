@@ -22,7 +22,7 @@ library(pander)
 
 # Introduction
 
-In social science, researchers might be interested to estimate the effect of a binary treatment (either treated or not treated). In experimental setting, individuals are randomly assigned into a control group and a treated group. Formally, denote $y_{i}$ as the outcome variable, $W_{i}$ as the treatment assignment variable ($W_{i}=1$ if in the treated group, $W_{i}=0$ if in the control group), and $X_{i}$ as a set of observed covariates (e.g. age, gender, race, eduction, etc). Then the researcher can estimate the classical linear model:
+In social science, researchers might be interested to estimate the effect of a binary treatment (either treated or not treated). In experimental setting, individuals are randomly assigned into a control group and a treated group. Formally, denote $y_{i}$ as the outcome variable, $W_{i}$ as the treatment assignment variable ($W_{i}=1$ if in the treated group, $W_{i}=0$ if in the control group), and $X_{i}$ as a set of observed covariates (e.g. age, gender, race, education, etc). Then the researcher can estimate the classical linear model:
 
 \begin{equation}
 Y_{i}=\tau W_{i}+X_{i}\beta+\epsilon_{i}
@@ -161,7 +161,7 @@ multiplot(box_d_DGP1$MSE,
 
 In both data generating processes, only the first two covariates $X1$, $X2$ contribute to the $\tau(\cdot)$ function. Therefore, adding extra covariates is purely adding "noise" to the causal forest algorithm. We should expect the variance of the heterogenous effect estimates increases as $d$ increases. 
 
-The simulation results of DGP2 with heterogeneous treatment effect meet our expectation. Although for resaons when the number of the covariates increases from 2 to 10, the MSE decreases a little bit, the MSE does not keep decreasring when go beyond 10. In fact, the variance of the MSE increases when we increase the number of the noise covariates from 10 to 40. The same happens to the confidence interval coverage rate. Since the sample size is defaulted to 1000, we already achieve a pretty good median coverage rate. As we have more noise covariates, the coverage rate becomes more and more unstable. When $d=40$ (that is, most of the observed covariates are not predictive to $\tau$ at all), in some test data points we will have very small (say, only 40\%) coverage rate by chance.
+The simulation results of DGP2 with heterogeneous treatment effect meet our expectation. Although for some resaons when the number of the covariates increases from 2 to 10, the median MSE decreases a little bit, the MSE does not keep decreasring when go beyond 10. In fact, the variance of the MSE increases when we increase the number of the noise covariates from 10 to 40. The same happens to the confidence interval coverage rate. Since the sample size is defaulted to 1000, we already achieve a pretty good median coverage rate. As we have more noise covariates, the coverage rate becomes more and more unstable. When $d=40$ (that is, most of the observed covariates are not predictive to $\tau$ at all), in some test data points we will have very small (say, only 40\%) coverage rate by chance.
 
 However, this is not the case for DGP1. As we see in Figure \ref{fig:fig3}, the MSE is shrinking when the number of noise covariates increases. And again we achieve almost 100\% accuracy in the 95\% confidence intervals when $d=40$. This result is puzzling.
 
@@ -172,7 +172,7 @@ multiplot(box_d_DGP1$se,
   
 ```
 
-
+The standard errors varying with $d$ are plotted in Figure \ref{fig:fig4}. As the number of covariates increases from 2 to 4, the distribution of the standard error drops a little bit. When $d$ goes beyond 10, the distribution of the standard errors is pretty stable. This is true for both constant effect DGP and heterogeneous effect DGP. Again it is puzzling to see smaller standard errors estimates as we throw more noises to the causal forest algorithm.
 
 ## Tuning Parameters
 
@@ -189,8 +189,6 @@ These are the tuning parameters I test:
 In this section I only report the median MSE and median coverage rate for each senario. The simulation results are as follows:
 
 The causal_forest() function in the grf package does not allow me to set the sample.fraction parameter smaller than 0.5. So I try to vary the sample.fraction from 0.1 to 0.5. As we see, perhaps we should stick to the default value 0.5.
-
-I Try sample fraction $s = 0.1, 0.2, 0.3, 0.4, 0.5$
 
 ```{r results='asis', echo=FALSE, }
 load("../output_df/output_s.RData")
@@ -265,7 +263,7 @@ final_output %>%
 
 # Discussion and Conclusion
 
-In this project I implement Monte Carlo simulation on the novel causal forest method (@causal_forest), which introduced the philosophy of predictive machine learning and the powerful random forest algorithm into heterogeneous treatment effect estimation and statistical inference. My simulation study shows that as sample size increases, the predictive accuracy of the point estimates increases rapidly. We obatin very good performance in terms of MSE when $n=5000$. However, the standard error estimates, which is one of the most distinguished features of their paper, does not significantly shrink as sample size increases, which might lead to an over-rejection problem in hypothesis testing. 
+In this project I implement Monte Carlo simulation on the novel causal forest method (@causal_forest), which introduced the philosophy of predictive machine learning and the powerful random forest algorithm into heterogeneous treatment effect estimation and statistical inference. My simulation study shows that as sample size increases, the predictive accuracy of the point estimates increases rapidly. We obatin very good performance in terms of MSE when $n=5000$. However, the standard error estimates, which is one of the most distinguished features of their paper, does not significantly shrink as sample size increases, which might lead to an over-rejection problem in hypothesis testing. Also, in the case of constant treatment effect data generating process, the MSE and coverage rate behaves strangely as the number of "noise" covariates increases.  
 
 I also examine the impact of varying the tuning parameters of the algorithm. My simulation results of the optimal tuning parameters are consistent with our common knowledge to the basic random forest algorithm: when growing each single tree, we should set the number of covariates as $\frac{2}{3}d$ and avoid to put regularization and restriction. And finally, the more trees, the better predictive accuracy.
 
