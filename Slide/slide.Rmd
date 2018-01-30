@@ -1,6 +1,6 @@
 ---
-title: "POLS 904 Final Project"
-subtitle: "Monte Carlo Simulation on Causal Forest"
+title: "Monte Carlo Simulation on Causal Forest"
+subtitle: ""
 author: "Jiacheng He"
 date: "December 13, 2017"
 output: beamer_presentation
