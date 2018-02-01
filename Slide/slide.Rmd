@@ -13,6 +13,7 @@ devtools::load_all()
 library(ggplot2)
 library(dplyr)
 library(pander)
+library(purrr)
 
 ```
 
@@ -113,7 +114,7 @@ set.seed(904)
 DGP_1 <- list(tau = 0,
               e = expression((1 + dbeta(X1, shape1 = 2, shape2 = 4)) / 4),
               m = expression(2 * X1 - 1))
-graphical_illustration(DGP_1, d = 10, n = 400) + labs(title = "DGP1, n = 200, d = 10")
+graphical_illustration(DGP_1, d = 10, n_train = 200, n_test = 200) + labs(title = "DGP1, n = 200, d = 10")
 ```
 
 
@@ -130,55 +131,31 @@ Fix $n=1000$, try $d=2, 4, 10, 20, 40$
 ## Sample Size and Covariate Size
 
 ```{r}
+n_y_scale_MSE <- c(0, 0.91)
+n_y_scale_coverage <- c(0.25, 1.0)
+
+d_y_scale_MSE <- c(0, 0.25)
+d_y_scale_coverage <- c(0.39, 1.0)
+
+n_y_scale_sigma <- c(0, 1.0)
+d_y_scale_sigma <- c(0, 1.26)
+
 load("../output_df/output_n_DGP1.RData")
-p1 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(n), MSE)) + 
-  scale_y_continuous(limit = c(0, 1.1)) +
-  labs(x = "n", title = "DGP1: constant tau")
-p2 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(n), coverage)) + 
-  scale_y_continuous(limit = c(0.25, 1)) +
-  labs(x = "n", y = "Coverage Rate", title = "DGP1: constant tau")
+box_n_DGP1 <- box_plot_final_output(final_output, x_lab = "n", title = "DGP1: constant tau", y_scale_MSE = n_y_scale_MSE, y_scale_coverage = n_y_scale_coverage, y_scale_sigma = n_y_scale_sigma)
 
 load("../output_df/output_d_DGP1.RData")
-p5 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(d), MSE)) + 
-  scale_y_continuous(limit = c(0, 0.25)) +
-  labs(x = "d", title = "DGP1: constant tau")
-p6 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(d), coverage)) + 
-  scale_y_continuous(limit = c(0.6, 1)) +
-  labs(x = "d", y = "Coverage Rate", title = "DGP1: constant tau")
+box_d_DGP1 <- box_plot_final_output(final_output, x_lab = "d", title = "DGP1: constant tau", y_scale_MSE = d_y_scale_MSE, y_scale_coverage = d_y_scale_coverage, y_scale_sigma = d_y_scale_sigma)
 
 load("../output_df/output_n_DGP2.RData")
-p3 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(n), MSE)) + 
-    scale_y_continuous(limit = c(0, 1.1)) +
-  labs(x = "n", title = "DGP2: heterogeneous tau")
-p4 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(n), coverage)) + 
-  scale_y_continuous(limit = c(0.25, 1)) +
-  labs(x = "n", y = "Coverage Rate", title = "DGP2: heterogeneous tau")
+box_n_DGP2 <- box_plot_final_output(final_output, x_lab = "n", title = "DGP2: heterogeneous tau", y_scale_MSE = n_y_scale_MSE, y_scale_coverage = n_y_scale_coverage, y_scale_sigma = n_y_scale_sigma)
 
 load("../output_df/output_d_DGP2.RData")
-p7 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(d), MSE)) + 
-  scale_y_continuous(limit = c(0, 0.25)) +
-  labs(x = "d", title = "DGP2: heterogeneous tau")
-p8 <- output %>% 
-  ggplot() + 
-  geom_boxplot(aes(factor(d), coverage)) + 
-  scale_y_continuous(limit = c(0.6, 1)) +
-  labs(x = "d", y = "Coverage Rate", title = "DGP2: heterogeneous tau")
+box_d_DGP2 <- box_plot_final_output(final_output, x_lab = "d", title = "DGP2: heterogeneous tau", y_scale_MSE = d_y_scale_MSE, y_scale_coverage = d_y_scale_coverage, y_scale_sigma = d_y_scale_sigma)
 
-multiplot(p1, p2, p3, p4, cols = 2)
+multiplot(box_n_DGP1$MSE, 
+          box_n_DGP1$coverage, 
+          box_n_DGP2$MSE, 
+          box_n_DGP2$coverage, cols = 2)
   
 ```
 
@@ -187,7 +164,10 @@ multiplot(p1, p2, p3, p4, cols = 2)
 
 ```{r}
 
-multiplot(p5, p6, p7, p8, cols = 2)
+multiplot(box_d_DGP1$MSE, 
+          box_d_DGP1$coverage, 
+          box_d_DGP2$MSE, 
+          box_d_DGP2$coverage, cols = 2)
   
 ```
 
@@ -209,10 +189,14 @@ I try varying five tuning parameters, one at a time. I use DGP2 and fix $n=1000,
 
 ```{r results='asis'}
 load("../output_df/output_s.RData")
-output %>% 
+final_output %>% 
+  evaluate_cf() %>% 
+  reduce(bind_rows) %>%
+  rename(s = param) %>% 
   group_by(s) %>% 
-  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
-  pandoc.table()
+  summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
+  round(digits = 3) %>% 
+  pandoc.table(caption = "Different Sample Fraction s")
 ```
 
 
@@ -222,10 +206,14 @@ output %>%
 
 ```{r results='asis'}
 load("../output_df/output_t.RData")
-output %>% 
+final_output %>% 
+  evaluate_cf() %>% 
+  reduce(bind_rows) %>%
+  rename(t = param) %>% 
   group_by(t) %>% 
-  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
-  pandoc.table()
+  summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
+  round(digits = 3) %>% 
+  pandoc.table(caption = "Different Number of Training Covariates t")
 ```
 
 
@@ -235,10 +223,14 @@ output %>%
 
 ```{r results='asis'}
 load("../output_df/output_b.RData")
-output %>% 
+final_output %>% 
+  evaluate_cf() %>% 
+  reduce(bind_rows) %>%
+  rename(b = param) %>% 
   group_by(b) %>% 
-  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
-  pandoc.table()
+  summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
+  round(digits = 3) %>% 
+  pandoc.table(caption = "Different Number of Trees b")
 ```
 
 
@@ -248,10 +240,14 @@ output %>%
 
 ```{r results='asis'}
 load("../output_df/output_size.RData")
-output %>% 
+final_output %>% 
+  evaluate_cf() %>% 
+  reduce(bind_rows) %>%
+  rename(size = param) %>% 
   group_by(size) %>% 
-  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
-  pandoc.table()
+  summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
+  round(digits = 3) %>% 
+  pandoc.table(caption = "Different Minimum Node Size")
 ```
 
 
@@ -261,8 +257,12 @@ output %>%
 
 ```{r results='asis'}
 load("../output_df/output_lambda.RData")
-output %>% 
+final_output %>% 
+  evaluate_cf() %>% 
+  reduce(bind_rows) %>%
+  rename(lambda = param) %>% 
   group_by(lambda) %>% 
-  summarise(MSE = median(MSE), coverage = median(coverage)) %>% 
-  pandoc.table()
+  summarise(MSE = median(MSE, na.rm = TRUE), coverage = median(coverage, na.rm = TRUE)) %>% 
+  round(digits = 3) %>% 
+  pandoc.table(caption = "Different Regularization Parameter lambda")
 ```
