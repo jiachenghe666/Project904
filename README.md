@@ -1,2 +1,2 @@
-# Simulation study on causal forest
+# Monte Carlo Simulation on Causal Forest
 
