@@ -5,7 +5,7 @@ Rather than to *predict* an outcome, causal forest is designed to *estimate* a p
 
 In Project904, I test the finite sample performance under various empirical environment and tuning parameter settings.
 
-The metrics I use include the mean square error between estimated treatment effects and true treatment effect (predictive accuracy of the point estimate), as well as the confidence interval coverage rate under repeated sampling (e.g. whether the 95% confidence interval really covers the true effect in 95% of the cases). 
+The metrics I use include the mean square error between estimated treatment effect and true treatment effect (predictive accuracy of the point estimate), as well as the confidence interval coverage rate under repeated sampling (e.g. whether the 95% confidence interval really covers the true effect in 95% of the cases). 
 
 
 ## R package
@@ -18,7 +18,12 @@ wrapper function: ```simulation```
 
 
 ## Main script
+You could run 
+```R CMD BATCH ./Project904/script.r```
+to replicate the simulation.
+
 With code packaging, the main script of the simulation work is concise and self-explanatory.
+
 ```R
 devtools::load_all()
 
@@ -34,7 +39,8 @@ DGP_1 <- list(tau = 0,
               e = expression((1 + dbeta(X1, shape1 = 2, shape2 = 4)) / 4),
               m = expression(2 * X1 - 1))
 DGP_2 <- list(tau = expression((1 + 1 / (1+exp(-20*(X1-1/3)))) * (1 + 1 / (1+exp(-20*(X2-1/3))))),
-              e = 0.5, m = 0)
+              e = 0.5, 
+              m = 0)
               
              
 #### Empirical environment 
@@ -67,3 +73,6 @@ output_b <- simulation(b_list, param_type="num.trees", DGP=DGP_2, bs_num=100, fi
 output_size <- simulation(size_list, param_type="min.node.size", DGP=DGP_2, bs_num=100, file_name="output_size")
 output_lambda <- simulation(lambda_list, param_type="lambda", DGP=DGP_2, bs_num=100, file_name="output_lambda")
 ```
+
+## Report
+Please see [here](https://github.com/JiachengHe/Project904/blob/master/paper/paper.pdf) for the short report, and see [here](https://github.com/JiachengHe/Project904/blob/master/Slide/slide.pdf) for the presentation slides.
