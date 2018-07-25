@@ -1,5 +1,6 @@
 # Monte Carlo Simulation on Causal Forest
 This is a simulation project on the causal forest method by [Wager and Athey (2017)](https://arxiv.org/pdf/1510.04342.pdf). Causal forest is a mix of machine learning and causal inference. It is a random forest type method to estimate heterogenous treatment effects. The treatment effect of each individual is assumed to be a function of individual's pre-treatment covariates. 
+
 Rather than to *predict* an outcome variable, causal forest is designed to *estimate* a parameter which captures the outcome difference between the treatment group and the control group. The asymptotic distribution theory is established thus we can obtain standard errors of the treatment effect estimates for each individuals, which makes causal forest very suitable for causal inference in the settings of randomized experiment or unconfoundedness. 
 
 In Project904, I test the finite sample performance of causal forest under various empirical environment and tuning parameter settings.
