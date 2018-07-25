@@ -1,9 +1,8 @@
 # Monte Carlo Simulation on Causal Forest
-This is a simulation project on the causal forest method by [Wager and Athey (2017)](https://arxiv.org/pdf/1510.04342.pdf). Causal forest is a random forest type method to estimate the heterogenous treatment effect conditional on individual covariates. 
+This is a simulation project on the causal forest method by [Wager and Athey (2017)](https://arxiv.org/pdf/1510.04342.pdf). Causal forest is a mix of machine learning and causal inference. It is a random forest type method to estimate heterogenous treatment effects. The treatment effect of each individual is assumed to be a function of individual's pre-treatment covariates. 
+Rather than to *predict* an outcome variable, causal forest is designed to *estimate* a parameter which captures the outcome difference between the treatment group and the control group. The asymptotic distribution theory is established thus we can obtain standard errors of the treatment effect estimates for each individuals, which makes causal forest very suitable for causal inference in the settings of randomized experiment or unconfoundedness. 
 
-Rather than to *predict* an outcome, causal forest is designed to *estimate* a parameter that captures the outcome difference between the treatment group and the control group. The asymptotic distribution theory is established thus we can obtain standard errors of the treatment effect estimates, which makes causal forest very suitable for causal inference in the settings of randomized trials or unconfoundedness. 
-
-In Project904, I test the finite sample performance under various empirical environment and tuning parameter settings.
+In Project904, I test the finite sample performance of causal forest under various empirical environment and tuning parameter settings.
 
 The metrics I use include the mean square error between estimated treatment effect and true treatment effect (predictive accuracy of the point estimate), as well as the confidence interval coverage rate under repeated sampling (e.g. whether the 95% confidence interval really covers the true effect in 95% of the cases). 
 
