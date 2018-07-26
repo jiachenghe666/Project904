@@ -8,6 +8,10 @@ In Project904, I test the finite sample performance of causal forest under vario
 The metrics I use include the mean square error between estimated treatment effect and true treatment effect (predictive accuracy of the point estimate), as well as the confidence interval coverage rate under repeated sampling (e.g. whether the 95% confidence interval really covers the true effect in 95% of the cases). 
 
 
+## Report
+Please see [here](https://github.com/JiachengHe/Project904/blob/master/paper/paper.pdf) for the short report, and see [here](https://github.com/JiachengHe/Project904/blob/master/Slide/slide.pdf) for the presentation slides.
+
+
 ## R package
 The R package documents the workflow of the Monte Carlo simulation. I write self-explanatory functions:
 
@@ -73,6 +77,3 @@ output_b <- simulation(b_list, param_type="num.trees", DGP=DGP_2, bs_num=100, fi
 output_size <- simulation(size_list, param_type="min.node.size", DGP=DGP_2, bs_num=100, file_name="output_size")
 output_lambda <- simulation(lambda_list, param_type="lambda", DGP=DGP_2, bs_num=100, file_name="output_lambda")
 ```
-
-## Report
-Please see [here](https://github.com/JiachengHe/Project904/blob/master/paper/paper.pdf) for the short report, and see [here](https://github.com/JiachengHe/Project904/blob/master/Slide/slide.pdf) for the presentation slides.
