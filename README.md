@@ -26,8 +26,6 @@ You could run
 ```R CMD BATCH ./Project904/script.r```
 to replicate the simulation.
 
-With code packaging, the main script of the simulation work is concise and self-explanatory.
-
 ```R
 devtools::load_all()
 
